@@ -10,26 +10,58 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: archlinux:latest
-      options: --privileged
+      options: --privileged --security-opt seccomp=unconfined
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install archiso and dependencies
+      - name: Initialize pacman keyring
+        run: |
+          pacman-key --init
+          pacman-key --populate archlinux
+          pacman -Sy --noconfirm archlinux-keyring
+
+      - name: Install dependencies
         run: |
           pacman -Syu --noconfirm
-          pacman -S --noconfirm archiso mkinitcpio squashfs-tools dosfstools mtools libisoburn
+          pacman -S --noconfirm \
+            archiso \
+            mkinitcpio \
+            squashfs-tools \
+            dosfstools \
+            mtools \
+            libisoburn \
+            grub \
+            syslinux \
+            util-linux \
+            coreutils \
+            findutils \
+            bash \
+            grep \
+            gawk \
+            sed \
+            which \
+            gzip \
+            xz \
+            zstd
 
       - name: Make scripts executable
-        run: chmod +x archlive/airootfs/root/customize_airootfs.sh archlive/airootfs/usr/local/bin/pepaos-welcome archlive/airootfs/usr/local/bin/pepaos-installer
+        run: |
+          chmod +x archlive/airootfs/root/customize_airootfs.sh
+          chmod +x archlive/airootfs/usr/local/bin/pepaos-welcome
+          chmod +x archlive/airootfs/usr/local/bin/pepaos-installer
 
       - name: Build ISO
-        run: mkarchiso -v -w /work -o /output archlive
+        run: |
+          mkarchiso -v -w /tmp/work -o /tmp/output archlive 2>&1
+
+      - name: List output
+        run: ls -lh /tmp/output/
 
       - name: Upload ISO
         uses: actions/upload-artifact@v4
         with:
           name: pepaos-iso
-          path: /output/*.iso
+          path: /tmp/output/*.iso
           if-no-files-found: error
