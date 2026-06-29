@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+
+# Pepa OS - Disk Installer
+# Installs Pepa OS from the live ISO to a target disk
+
+set -euo pipefail
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+echo -e "${CYAN}"
+echo "  ╔══════════════════════════════════════════╗"
+echo "  ║           PEPA OS INSTALLER             ║"
+echo "  ╚══════════════════════════════════════════╝"
+echo -e "${NC}"
+
+# Check if running as root
+if [[ $EUID -ne 0 ]]; then
+    echo -e "${RED}Error: Please run as root.${NC}"
+    exit 1
+fi
+
+# List available disks
+echo "Available disks:"
+lsblk -d -o NAME,SIZE,MODEL | grep -v loop
+echo ""
+
+read -rp "Enter target disk (e.g., sda, nvme0n1): " DISK
+DISK="/dev/${DISK}"
+
+if [[ ! -b "${DISK}" ]]; then
+    echo -e "${RED}Error: ${DISK} is not a block device.${NC}"
+    exit 1
+fi
+
+echo ""
+echo -e "${RED}WARNING: This will erase ALL data on ${DISK}.${NC}"
+read -rp "Type 'YES' to continue: " CONFIRM
+if [[ "${CONFIRM}" != "YES" ]]; then
+    echo "Aborted."
+    exit 1
+fi
+
+# --- Partitioning ---
+echo -e "${GREEN}[*] Partitioning disk...${NC}"
+parted "${DISK}" -- mklabel gpt
+parted "${DISK}" -- mkpart primary 512MiB 100%
+parted "${DISK}" -- mkpart ESP fat32 1MiB 512MiB
+parted "${DISK}" -- set 2 esp on
+
+if echo "${DISK}" | grep -q "nvme"; then
+    ROOT_PART="${DISK}p1"
+    BOOT_PART="${DISK}p2"
+else
+    ROOT_PART="${DISK}1"
+    BOOT_PART="${DISK}2"
+fi
+
+# --- Formatting ---
+echo -e "${GREEN}[*] Formatting partitions...${NC}"
+mkfs.ext4 -F "${ROOT_PART}"
+mkfs.fat -F32 "${BOOT_PART}"
+
+# --- Mounting ---
+echo -e "${GREEN}[*] Mounting partitions...${NC}"
+mount "${ROOT_PART}" /mnt
+mount --mkdir "${BOOT_PART}" /mnt/boot
+
+# --- Base install ---
+echo -e "${GREEN}[*] Installing base system...${NC}"
+basestrap /mnt base base-devel linux linux-firmware i3-wm i3status i3lock dmenu alacritty lightdm lightdm-gtk-greeter networkmanager sudo vim firefox
+
+# --- Fstab ---
+echo -e "${GREEN}[*] Generating fstab...${NC}"
+fstabgen -U /mnt >> /mnt/etc/fstab
+
+# --- Chroot config ---
+echo -e "${GREEN}[*] Configuring system...${NC}"
+arch-chroot /mnt /bin/bash <<'CHROOT'
+    ln -sf /usr/share/zoneinfo/UTC /etc/localtime
+    hwclock --systohc
+    echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
+    locale-gen
+    echo "LANG=en_US.UTF-8" > /etc/locale.conf
+    echo "pepaos" > /etc/hostname
+    echo -e "127.0.0.1 localhost\n::1 localhost\n127.0.1.1 pepaos.localdomain pepaos" > /etc/hosts
+    echo "root:pepaos" | chpasswd
+    systemctl enable NetworkManager
+    systemctl enable lightdm
+    useradd -m -G wheel,audio,video,storage -s /bin/bash pepa
+    echo "pepa:pepa" | chpasswd
+    echo "%wheel ALL=(ALL) ALL" > /etc/sudoers.d/10-pepaos
+    mkinitcpio -P
+CHROOT
+
+# --- Bootloader ---
+echo -e "${GREEN}[*] Installing GRUB...${NC}"
+arch-chroot /mnt /bin/bash <<'CHROOT'
+    grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=PEPAOS
+    grub-mkconfig -o /boot/grub/grub.cfg
+CHROOT
+
+# --- Cleanup ---
+umount -R /mnt
+
+echo ""
+echo -e "${CYAN}  ╔══════════════════════════════════════════╗${NC}"
+echo -e "${CYAN}  ║     PEPA OS INSTALLED SUCCESSFULLY!     ║${NC}"
+echo -e "${CYAN}  ║                                        ║${NC}"
+echo -e "${CYAN}  ║  Root:    root / pepaos                 ║${NC}"
+echo -e "${CYAN}  ║  User:    pepa / pepa                   ║${NC}"
+echo -e "${CYAN}  ║                                        ║${NC}"
+echo -e "${CYAN}  ║  Reboot and remove the installation     ║${NC}"
+echo -e "${CYAN}  ║  media to boot into Pepa OS!            ║${NC}"
+echo -e "${CYAN}  ╚══════════════════════════════════════════╝${NC}"

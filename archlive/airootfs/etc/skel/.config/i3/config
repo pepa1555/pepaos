@@ -1,0 +1,165 @@
+# Pepa OS - i3 Configuration
+
+# --- Variables ---
+set $mod Mod4
+set $pepaos_bg #0f1923
+set $pepaos_fg #cdd6f4
+set $pepaos_accent #00d4aa
+set $pepaos_alt #45475a
+set $pepaos_urgent #f38ba8
+
+# --- Font ---
+font pango:JetBrains Mono 10
+
+# --- Default wallpaper ---
+exec_always feh --bg-scale /usr/share/backgrounds/pepaos-wallpaper.png
+
+# --- Compositor ---
+exec_always picom --config /dev/null --backend glx --vsync
+
+# --- Network Manager applet ---
+exec --no-startup-id nm-applet
+exec --no-startup-id volumeicon
+exec --no-startup-id polkit-gnome-authentication-agent-1
+
+# --- Modifier Key ---
+set $mod Mod4
+
+# --- Focus ---
+bindsym $mod+h focus left
+bindsym $mod+j focus down
+bindsym $mod+k focus up
+bindsym $mod+l focus right
+bindsym $mod+Left focus left
+bindsym $mod+Down focus down
+bindsym $mod+Up focus up
+bindsym $mod+Right focus right
+
+# --- Move focused window ---
+bindsym $mod+Shift+h move left
+bindsym $mod+Shift+j move down
+bindsym $mod+Shift+k move up
+bindsym $mod+Shift+l move right
+bindsym $mod+Shift+Left move left
+bindsym $mod+Shift+Down move down
+bindsym $mod+Shift+Up move up
+bindsym $mod+Shift+Right move right
+
+# --- Split orientation ---
+bindsym $mod+s split horizontal
+bindsym $mod+v split vertical
+bindsym $mod+z split toggle
+
+# --- Layout ---
+bindsym $mod+w layout tabbed
+bindsym $mod+e layout toggle split
+bindsym $mod+Shift+space floating toggle
+
+# --- Fullscreen ---
+bindsym $mod+f fullscreen toggle
+
+# --- Focus mode ---
+bindsym $mod+grave mode_toggle
+
+# --- Scratchpad ---
+bindsym $mod+Shift+minus move scratchpad
+bindsym $mod+minus scratchpad show
+
+# --- Resize mode ---
+mode "resize" {
+    bindsym h resize shrink width 10 px or 10 ppt
+    bindsym j resize grow height 10 px or 10 ppt
+    bindsym k resize shrink height 10 px or 10 ppt
+    bindsym l resize grow width 10 px or 10 ppt
+    bindsym Left resize shrink width 10 px or 10 ppt
+    bindsym Down resize grow height 10 px or 10 ppt
+    bindsym Up resize shrink height 10 px or 10 ppt
+    bindsym Right resize grow width 10 px or 10 ppt
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+    bindsym $mod+r mode "default"
+}
+bindsym $mod+r mode "resize"
+
+# --- Workspaces ---
+set $ws1 "1: Term"
+set $ws2 "2: Web"
+set $ws3 "3: Code"
+set $ws4 "4: Files"
+set $ws5 "5: Media"
+set $ws6 "6: Chat"
+set $ws7 "7: Sys"
+set $ws8 "8: Misc"
+
+workspace 1 output primary
+bindsym $mod+1 workspace 1
+bindsym $mod+2 workspace 2
+bindsym $mod+3 workspace 3
+bindsym $mod+4 workspace 4
+bindsym $mod+5 workspace 5
+bindsym $mod+6 workspace 6
+bindsym $mod+7 workspace 7
+bindsym $mod+8 workspace 8
+
+bindsym $mod+Shift+1 move container to workspace 1
+bindsym $mod+Shift+2 move container to workspace 2
+bindsym $mod+Shift+3 move container to workspace 3
+bindsym $mod+Shift+4 move container to workspace 4
+bindsym $mod+Shift+5 move container to workspace 5
+bindsym $mod+Shift+6 move container to workspace 6
+bindsym $mod+Shift+7 move container to workspace 7
+bindsym $mod+Shift+8 move container to workspace 8
+
+bindsym $mod+Tab workspace back_and_forth
+bindsym $mod+Shift+Tab move workspace to output left
+
+# --- Application keybindings ---
+bindsym $mod+Return exec alacritty
+bindsym $mod+Shift+Return exec thunar
+bindsym $mod+d exec rofi -show drun -show-icons
+bindsym $mod+Tab exec rofi -show window -show-icons
+bindsym $mod+Shift+d exec dmenu_run
+bindsym $mod+Shift+q kill
+bindsym Ctrl+Alt+l exec i3lock -c 0f1923
+bindsym Print exec flameshot gui
+bindsym $mod+Shift+x exec i3-nagbar -t warning -m 'Exit Pepa OS?' -b 'Yes' 'i3-msg exit'
+
+# --- Reload / Restart ---
+bindsym $mod+Shift+c reload
+bindsym $mod+Shift+r restart
+
+# --- Gaps ---
+gaps inner 8
+gaps outer 4
+smart_gaps on
+smart_borders on
+
+# --- Colors ---
+# client.background           $pepaos_bg
+client.focused               $pepaos_accent $pepaos_accent $pepaos_fg $pepaos_accent
+client.focused_inactive      $pepaos_alt $pepaos_alt $pepaos_fg $pepaos_alt
+client.unfocused             $pepaos_alt $pepaos_alt $pepaos_fg $pepaos_alt
+client.urgent                $pepaos_urgent $pepaos_urgent $pepaos_fg $pepaos_urgent
+client.placeholder           $pepaos_bg $pepaos_bg $pepaos_fg $pepaos_bg
+client.background            $pepaos_bg
+
+# --- Bar ---
+bar {
+    position top
+    status_command i3status
+    font pango:JetBrains Mono 10
+
+    colors {
+        background #0f1923
+        statusline #cdd6f4
+        separator #45475a
+        focused_workspace  #00d4aa #00d4aa #0f1923
+        active_workspace   #45475a #45475a #cdd6f4
+        inactive_workspace #1e2a36 #1e2a36 #6c7086
+        urgent_workspace   #f38ba8 #f38ba8 #0f1923
+        binding_mode       #f38ba8 #f38ba8 #0f1923
+    }
+}
+
+# --- Autostart ---
+exec --no-startup-id /usr/local/bin/pepaos-welcome

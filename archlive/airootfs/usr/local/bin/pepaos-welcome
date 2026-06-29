@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+# Pepa OS - Welcome script (runs once on first login)
+
+WELCOME_FLAG="${HOME}/.config/pepaos-welcome-done"
+
+if [[ -f "${WELCOME_FLAG}" ]]; then
+    exit 0
+fi
+
+# Small delay to let the desktop settle
+sleep 2
+
+alacritty -e bash -c "
+    clear
+    echo '  ╔══════════════════════════════════════════╗'
+    echo '  ║           WELCOME TO PEPA OS             ║'
+    echo '  ║                                          ║'
+    echo '  ║    Terminal:    Super + Enter           ║'
+    echo '  ║    App Menu:    Super + D               ║'
+    echo '  ║    Browser:     Firefox in dock          ║'
+    echo '  ║    Files:       Super + Shift + Enter    ║'
+    echo '  ║    Lock:        Ctrl + Alt + L           ║'
+    echo '  ║                                          ║'
+    echo '  ║  Workspaces:  Super + 1-8                ║'
+    echo '  ║  Close window: Super + Shift + Q         ║'
+    echo '  ║                                          ║'
+    echo '  ║  Enjoy your Pepa OS experience!          ║'
+    echo '  ╚══════════════════════════════════════════╝'
+    echo ''
+    echo '  Press Enter to continue...'
+    read -r
+" &>/dev/null &
+
+touch "${WELCOME_FLAG}"

@@ -1,0 +1,12 @@
+NAME="Pepa OS"
+PRETTY_NAME="Pepa OS"
+ID=pepaos
+ID_LIKE=arch
+BUILD_ID=rolling
+ANSI_COLOR="0;36"
+HOME_URL="https://pepaos.example.com"
+DOCUMENTATION_URL="https://pepaos.example.com/docs"
+SUPPORT_URL="https://pepaos.example.com/support"
+BUG_REPORT_URL="https://pepaos.example.com/bugs"
+PRIVACY_POLICY_URL="https://pepaos.example.com/privacy"
+LOGO=pepaos
